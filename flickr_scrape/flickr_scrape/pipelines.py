@@ -26,14 +26,22 @@ class customImagePipeline(ImagesPipeline):
     def file_path(self, request, response=None, info=None):
         return request.meta['filename']
 
+    def convert(height, width, size):
+        nh = (height - size)/2
+        nw = (height - size)/2
+        return (nh, nw, nh + size, nw + size)
+
     def item_completed(self, results, item, info):
         for result, image_info in results:
             if result:
                 path = IMAGES_STORE + '/' + image_info['path']
                 img = Image.open(path)
-                # here is where you do your resizing - this method overwrites the
-                # original image you will need to create a copy if you want to keep
-                # the original.
-                img = img.resize((100, 72))
+                height, width = img.size
+                if(height > 1024 and width > 1024):
+                    img = img.crop(self.convert(height, width, 1024))
+                elif(height > 512 and width > 512):
+                    img = img.crop(self.convert(height, width, 512))
+                else:
+                    img = img.resize((256, 256))
                 img.save(path)
         return item
